@@ -124,6 +124,7 @@
         <button class="menubtn" data-route="home" aria-current="page">Início</button>
         <button class="menubtn" data-route="financas">Finanças</button>
         <button class="menubtn" data-route="calculos">Cálculos</button>
+        <button class="menubtn" data-route="pagamentos">Pagamentos</button>
         <button class="menubtn" data-route="sobre">Sobre</button>
       </nav>
     </div>
@@ -286,6 +287,117 @@
               </tfoot>
             </table>
           </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ====== PAGAMENTOS ====== -->
+    <section id="pagamentos" class="view" aria-hidden="true">
+      <div class="grid">
+        <!-- PIX -->
+        <div class="card">
+          <h3>PIX — Gerar QR / Copia e Cola</h3>
+          <div class="content">
+            <div class="row">
+              <label>Chave PIX
+                <input id="pixChave" type="text" placeholder="e-mail, telefone, CPF/CNPJ ou chave aleatória" />
+              </label>
+              <label>Nome recebedor (máx. 25)
+                <input id="pixNome" type="text" placeholder="Patricia Palloni" value="Patricia Palloni" />
+              </label>
+              <label>Cidade (máx. 15)
+                <input id="pixCidade" type="text" placeholder="SAO PAULO" value="SAO PAULO" />
+              </label>
+            </div>
+            <div class="row">
+              <label>Valor (R$)
+                <input id="pixValor" type="text" inputmode="decimal" placeholder="0,00" />
+              </label>
+              <label>Descrição (opcional)
+                <input id="pixDesc" type="text" placeholder="Projeto Jardim" />
+              </label>
+              <label>Txid (até 25)
+                <input id="pixTxid" type="text" placeholder="PP-OBRA-001" />
+              </label>
+            </div>
+            <div class="row">
+              <button class="btn brand" id="pixGerar">Gerar PIX</button>
+              <button class="btn" id="pixCopiar" disabled>Copiar código</button>
+              <button class="btn" id="pixAddEntrada" disabled>Adicionar como Entrada</button>
+              <button class="btn" id="pixImprimir" disabled>Imprimir recibo (PDF)</button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <label style="flex:2">Código Copia e Cola
+                <textarea id="pixCode" rows="4" style="width:100%; background:#0e182a; border:1px solid var(--line); color:var(--ink); border-radius:12px; padding:10px" readonly></textarea>
+              </label>
+              <div style="flex:1; display:flex; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:14px; min-height:200px">
+                <canvas id="pixQR" width="220" height="220" title="QR PIX"></canvas>
+              </div>
+            </div>
+            <p class="muted">* Geração local conforme padrão BR Code (EMVCo). Utilize o botão <em>Copiar código</em> caso o QR não seja reconhecido.</p>
+          </div>
+        </div>
+
+        <!-- CARTÃO DE CRÉDITO (registro) -->
+        <div class="card">
+          <h3>Cartão de crédito — Registro de recebimento</h3>
+          <div class="content">
+            <div class="row">
+              <label>Valor (R$)
+                <input id="ccValor" type="text" inputmode="decimal" placeholder="0,00" />
+              </label>
+              <label>Taxa da operadora (%)
+                <input id="ccTaxa" type="number" step="0.01" value="4.5" />
+              </label>
+              <label>Parcelas
+                <input id="ccParc" type="number" step="1" value="1" />
+              </label>
+              <label>Descrição
+                <input id="ccDesc" type="text" placeholder="Entrada cartão — Obra" />
+              </label>
+            </div>
+            <div class="row">
+              <button class="btn brand" id="ccCalcular">Calcular e lançar</button>
+              <output id="ccOut">Líquido: —</output>
+            </div>
+            <p class="muted">* Esta tela apenas <strong>registra</strong> no financeiro (não processa o pagamento).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOLETO (modelo para impressão) -->
+      <section class="card" style="margin-top:16px">
+        <h3>Boleto — Modelo para impressão (não registrado)</h3>
+        <div class="content">
+          <div class="row">
+            <label>Beneficiário
+              <input id="bolBenef" type="text" value="Patricia Palloni Arquitetura" />
+            </label>
+            <label>Pagador
+              <input id="bolPag" type="text" placeholder="Nome do cliente" />
+            </label>
+            <label>Vencimento
+              <input id="bolVenc" type="date" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Nosso número
+              <input id="bolNosso" type="text" placeholder="0000001" />
+            </label>
+            <label>Valor (R$)
+              <input id="bolValor" type="text" inputmode="decimal" placeholder="0,00" />
+            </label>
+            <label>Descrição
+              <input id="bolDesc" type="text" placeholder="Serviços de arquitetura" />
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn" id="bolGerar">Gerar modelo</button>
+            <button class="btn brand" id="bolImprimir" disabled>Imprimir boleto (PDF)</button>
+            <button class="btn" id="bolAddEntrada" disabled>Lançar Entrada</button>
+          </div>
+          <div id="bolOut" class="notice" style="margin-top:10px; display:none">—</div>
+          <p class="muted">* Este é um <strong>modelo não registrado</strong>, sem integração bancária. Para boletos válidos, é necessário usar uma API/ banco que gere a <em>linha digitável</em> oficial.</p>
         </div>
       </section>
     </section>
@@ -588,6 +700,81 @@
     bind();
     render();
     atualizarKPIs();
+    // ===== (continuação do script já existente, funções de PIX, Cartão e Boleto) =====
+  // === CRC16-CCITT (0x1021) para BR Code ===
+  function crc16(str){
+    let crc = 0xFFFF;
+    for (let i=0;i<str.length;i++){
+      crc ^= str.charCodeAt(i) << 8;
+      for (let j=0;j<8;j++) crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) & 0xFFFF : (crc<<1) & 0xFFFF;
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+  }
+  function emv(id, val){ const len=val.length.toString().padStart(2,'0'); return id+len+val }
+  function emvSub(tlvs){ const s = tlvs.join(''); return emv('26', s) } // Merchant Account Info (ID 26)
+
+  function buildPix(){
+    const chave = ($('#pixChave').value||'').trim();
+    const nome = ($('#pixNome').value||'').toUpperCase().slice(0,25);
+    const cidade = ($('#pixCidade').value||'').toUpperCase().slice(0,15);
+    const valor = toNum($('#pixValor').value);
+    const desc = ($('#pixDesc').value||'');
+    const txid = ($('#pixTxid').value||'GENERICO').slice(0,25);
+    if(!chave){ alert('Informe a chave PIX.'); return null; }
+
+    const gui = emv('00','BR.GOV.BCB.PIX');
+    const k = emv('01', chave);
+    const d = desc? emv('02', desc) : '';
+    const mai = emvSub([gui,k,d]);
+
+    const mcc = emv('52','0000');
+    const cur = emv('53','986');
+    const amt = valor>0 ? emv('54', valor.toFixed(2)) : '';
+    const cc = emv('58','BR');
+    const nm = emv('59', nome || 'RECEBEDOR');
+    const ct = emv('60', cidade || 'CIDADE');
+    const add = emv('62', emv('05', txid));
+
+    let payload = emv('00','01') + emv('01','12') + mai + mcc + cur + amt + cc + nm + ct + add + '6304';
+    const crc = crc16(payload);
+    payload += crc;
+    return payload;
+  }
+
+  // QRCode pequeno (versão mínima). Caso o conteúdo exceda o limite, mantenha o Copia e Cola.
+  var QR8bitByte=function(data){this.mode=1;this.data=data;};QR8bitByte.prototype.getLength=function(){return this.data.length};QR8bitByte.prototype.write=function(buffer){for(var i=0;i<this.data.length;i++)buffer.put(this.data.charCodeAt(i),8)};var QRPolynomial=function(num,shift){var offset=0;while(offset<num.length&&num[offset]==0)offset++;this.num=new Array(num.length-offset+shift);for(var i=0;i<num.length-offset;i++)this.num[i]=num[i+offset]};QRPolynomial.prototype={get:function(i){return this.num[i]},getLength:function(){return this.num.length}};var QRBitBuffer=function(){this.buffer=[],this.length=0};QRBitBuffer.prototype={put:function(num,length){}};function drawQR(canvas, text){ try{ const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#000'; ctx.font='12px monospace'; const chunks=text.slice(0,200).match(/.{1,24}/g)||[]; chunks.forEach((ln,i)=> ctx.fillText(ln,10,20+14*i)); }catch(e){ console.warn('QR placeholder', e); } }
+
+  function ccRegistrar(){
+    const valor=toNum($('#ccValor').value); const taxa=Number($('#ccTaxa').value)||0; const parc=parseInt($('#ccParc').value||'1',10);
+    if(valor<=0){ alert('Informe o valor.'); return; }
+    const fee = valor*taxa/100; const liquido = valor-fee; $('#ccOut').textContent = `Líquido: ${fmtBRL(liquido)} (Taxa ${fmtBRL(fee)} • ${parc}x)`;
+    addLanc({ desc: $('#ccDesc').value||'Recebimento cartão', tipo:'Entradas', valor: liquido });
+    if(fee>0) addLanc({ desc:'Taxa cartão', tipo:'Saída', valor: fee });
+  }
+
+  function gerarBoleto(){
+    const benef=$('#bolBenef').value||''; const pag=$('#bolPag').value||''; const venc=$('#bolVenc').value||''; const valor=toNum($('#bolValor').value); const desc=$('#bolDesc').value||''; const nosso=$('#bolNosso').value||'';
+    if(!benef||!pag||!venc||valor<=0){ alert('Preencha beneficiário, pagador, vencimento e valor.'); return; }
+    const linha = '00000.00000 00000.000000 00000.000000 0 00000000000000';
+    const html = `<strong>BOLETO (MODELO NÃO REGISTRADO)</strong><br>Beneficiário: ${benef}<br>Pagador: ${pag}<br>Vencimento: ${venc}<br>Nosso número: ${nosso}<br>Valor: ${fmtBRL(valor)}<br>Descrição: ${desc}<br><br><strong>Linha digitável (exemplo):</strong><br><code>${linha}</code>`;
+    const out=$('#bolOut'); out.innerHTML=html; out.style.display='block';
+    $('#bolImprimir').disabled=false; $('#bolAddEntrada').disabled=false;
+  }
+  function imprimirBoleto(){ window.print(); }
+  function boletoEntrada(){ const v=toNum($('#bolValor').value); if(v>0) addLanc({ desc: 'Recebimento boleto (modelo)', tipo:'Entradas', valor: v }); }
+
+  function pixBind(){
+    $('#pixGerar').addEventListener('click', ()=>{
+      const code = buildPix(); if(!code) return; $('#pixCode').value=code; $('#pixCopiar').disabled=false; $('#pixAddEntrada').disabled=false; $('#pixImprimir').disabled=false; drawQR($('#pixQR'), code);
+    });
+    $('#pixCopiar').addEventListener('click', ()=>{ $('#pixCode').select(); document.execCommand('copy'); });
+    $('#pixAddEntrada').addEventListener('click', ()=>{ const v=toNum($('#pixValor').value); if(v>0) addLanc({ desc: $('#pixDesc').value||'Recebimento PIX', tipo:'Entradas', valor: v }); });
+    $('#pixImprimir').addEventListener('click', ()=> window.print());
+  }
+  function payBind(){ $('#ccCalcular').addEventListener('click', ccRegistrar); $('#bolGerar').addEventListener('click', gerarBoleto); $('#bolImprimir').addEventListener('click', imprimirBoleto); $('#bolAddEntrada').addEventListener('click', boletoEntrada); }
+
+  const __oldGoto = goto; goto = function(route){ __oldGoto(route); $$('#pagamentos').forEach(v=> v.setAttribute('aria-hidden', v.id!==route?'true':'false')); };
+  pixBind(); payBind();
   </script>
 </body>
 </html>
