@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patricia Palloni Arquitetura — Finanças & Cálculos</title>
+  <style>
+    :root{
+      /* Paleta elegante e suave (brand PP) */
+      --bg:#0f141d;           /* fundo */
+      --ink:#edf2f7;          /* texto */
+      --muted:#a9b4c6;        /* secundário */
+      --line:#223049;         /* bordas */
+      --panel:#121a27;        /* cartões */
+      --brand:#a6e1ff;        /* azul claro */
+      --accent:#c5f5df;       /* verde água */
+      --rose:#ffcfe0;         /* detalhe suave rosé */
+      --amber:#ffe3b0;        /* destaque */
+      --radius:18px;
+      --shadow: 0 12px 36px rgba(0,0,0,.30), inset 0 0 0 1px #1e2c47a0;
+      --print-ink:#111827;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      background:
+        radial-gradient(1200px 640px at 90% -10%, #1b2a46 0%, transparent 60%),
+        radial-gradient(900px 420px at -10% 0%, #14243d 0%, transparent 60%), var(--bg);
+      font: 15px/1.5 system-ui, Segoe UI, Roboto, Arial;
+    }
+
+    /* ====== Navbar ====== */
+    .navbar{position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.1) blur(10px);
+      background:linear-gradient(0deg, #0f192bdd, #0f192bcc); border-bottom:1px solid var(--line)}
+    .wrap{max-width:1200px; margin:0 auto; padding:14px 16px}
+    .nav-row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, var(--rose), var(--brand)); box-shadow:inset 0 0 0 2px #ffffff22}
+    .brand h1{margin:0; font-size:18px; letter-spacing:.6px}
+    .brand small{display:block; color:var(--muted); font-weight:500}
+
+    .menu{display:flex; gap:6px; flex-wrap:wrap}
+    .menubtn{appearance:none; border:1px solid var(--line); background:#12233a; color:var(--ink);
+      padding:10px 14px; border-radius:12px; cursor:pointer; transition:.2s transform,.2s background}
+    .menubtn[aria-current="page"], .menubtn:hover{background:#16385fd9}
+
+    /* ====== Seções ====== */
+    main{padding:22px 16px}
+    .view{display:none}
+    .view[aria-hidden="false"]{display:block}
+
+    .hero{position:relative; overflow:hidden; border-radius:24px; border:1px solid var(--line); box-shadow:var(--shadow);
+      background:linear-gradient(180deg,#101a2a,#0f1726)}
+    .hero .inner{display:grid; gap:10px; align-items:center; padding:26px}
+    @media(min-width:900px){ .hero .inner{grid-template-columns: 1.2fr .8fr} }
+    .hero h2{margin:0 0 6px; font-size:28px}
+    .hero p{margin:0; color:var(--muted)}
+    .hero .card{background:#0f1b2e; border:1px solid var(--line)}
+
+    .grid{display:grid; gap:16px}
+    @media(min-width:980px){ .grid{grid-template-columns: 1fr 1fr} }
+
+    .card{background:linear-gradient(180deg, #101a2a, #0e1626); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+    .card h3{margin:0; padding:14px 16px; border-bottom:1px solid var(--line); background:#10243c; font-size:16px}
+    .content{padding:14px 16px}
+
+    label{font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center}
+    input, select, button{font:inherit; color:inherit}
+    input[type="text"], input[type="number"], input[type="date"], select{
+      background:#0e182a; border:1px solid var(--line); color:var(--ink); border-radius:12px; padding:8px 10px; min-height:38px
+    }
+
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .row > *{flex:1}
+    .btn{background:#0f2035; border:1px solid var(--line); border-radius:12px; padding:10px 12px; cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .btn.brand{background:linear-gradient(180deg, #123459, #0e2744); border-color:#2a4c7a}
+    .btn.ghost{background:transparent}
+    .btn.danger{background:#3b1b1b; border-color:#844}
+
+    table{width:100%; border-collapse:collapse}
+    thead th{position:sticky; top:0; background:#10243c}
+    th, td{border-bottom:1px dashed #1a314f; padding:10px 8px; text-align:left}
+    tbody tr:hover{background:#0f1f36}
+    .num{text-align:right; white-space:nowrap}
+
+    .kpi{display:grid; grid-template-columns: repeat(2,1fr); gap:10px}
+    @media(min-width:640px){ .kpi{grid-template-columns: repeat(4,1fr)} }
+    .kpi .box{background:#0f1c31; border:1px solid var(--line); border-radius:14px; padding:12px}
+    .kpi .box h4{margin:0 0 6px; font-size:12px; color:var(--muted)}
+    .kpi .val{font-weight:700; font-size:18px}
+
+    /* Tabs internas de cálculos */
+    .subtabs{display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap}
+    .subtabs .tab{border:1px solid var(--line); background:#11233a; padding:8px 12px; border-radius:10px; cursor:pointer}
+    .subtabs .tab[aria-selected="true"], .subtabs .tab:hover{background:#15385e}
+    .subview{display:none}
+    .subview[aria-hidden="false"]{display:block}
+
+    /* PRINT */
+    @media print{
+      .navbar, #tools, .hero, .subtabs, #home{display:none}
+      body{background:white; color:var(--print-ink)}
+      .wrap{max-width:100%; padding:0 10mm}
+      .card{border:0; box-shadow:none}
+      .card h3{background:white; color:var(--print-ink); border:0; padding:0; margin:0 0 6px}
+      table{border:1px solid #e5e7eb}
+      th, td{border-bottom:1px solid #e5e7eb}
+    }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="wrap nav-row">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Patricia Palloni <small>Arquitetura</small></h1>
+        </div>
+      </div>
+      <nav class="menu" role="tablist">
+        <button class="menubtn" data-route="home" aria-current="page">Início</button>
+        <button class="menubtn" data-route="financas">Finanças</button>
+        <button class="menubtn" data-route="calculos">Cálculos</button>
+        <button class="menubtn" data-route="sobre">Sobre</button>
+      </nav>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- ====== HOME ====== -->
+    <section id="home" class="view" aria-hidden="false">
+      <div class="hero">
+        <div class="inner">
+          <div>
+            <h2>Bem-vinda ao painel, Patricia</h2>
+            <p>Centralize <strong>finanças</strong> de projetos e acesse <strong>cálculos</strong> práticos de arquitetura, paisagismo e iluminação — tudo em um só lugar.</p>
+            <div class="row" style="margin-top:12px">
+              <button class="btn brand" data-route="financas">Abrir Finanças</button>
+              <button class="btn" data-route="calculos">Abrir Cálculos</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Destaques rápidos</h3>
+            <div class="content">
+              <div class="kpi">
+                <div class="box"><h4>Entradas</h4><div class="val" id="kEnt">R$ 0,00</div></div>
+                <div class="box"><h4>Saídas</h4><div class="val" id="kSai">R$ 0,00</div></div>
+                <div class="box"><h4>Fixas</h4><div class="val" id="kFix">R$ 0,00</div></div>
+                <div class="box"><h4>Saldo</h4><div class="val" id="kSaldo">R$ 0,00</div></div>
+              </div>
+              <p class="muted" style="margin-top:8px">* Indicadores calculados a partir dos lançamentos atuais.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== FINANÇAS ====== -->
+    <section id="financas" class="view" aria-hidden="true">
+      <div class="grid">
+        <div class="card" id="form">
+          <h3>Novo lançamento</h3>
+          <div class="content">
+            <div class="row">
+              <label style="flex:1.4">Descrição
+                <input id="iDesc" type="text" placeholder="Ex.: Projeto, Mudas, Mão de obra…" />
+              </label>
+              <label>Data
+                <input id="iData" type="date" />
+              </label>
+            </div>
+            <div class="row">
+              <label>Tipo
+                <select id="iTipo">
+                  <option>Entradas</option>
+                  <option>Saída</option>
+                  <option>Fixas</option>
+                </select>
+              </label>
+              <label>Conta
+                <select id="iConta">
+                  <option>Banco abcd</option>
+                  <option>Cartão de crédito abc</option>
+                </select>
+              </label>
+              <label>Centro
+                <select id="iCentro">
+                  <option>Empresa</option>
+                  <option>Pessoal</option>
+                </select>
+              </label>
+              <label>Valor (R$)
+                <input id="iValor" type="text" inputmode="decimal" placeholder="0,00" />
+              </label>
+              <label>Imp. %
+                <input id="iImp" type="text" inputmode="decimal" value="0" />
+              </label>
+              <label>Mk %
+                <input id="iMk" type="text" inputmode="decimal" value="0" />
+              </label>
+            </div>
+            <div class="row">
+              <button class="btn brand" id="btnAdd">+ Adicionar</button>
+              <button class="btn" id="btnPDF">Exportar PDF</button>
+              <button class="btn danger" id="btnZerar">Zerar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="tools">
+          <h3>Filtros</h3>
+          <div class="content">
+            <div class="row">
+              <label>Conta
+                <select id="fConta">
+                  <option value="">Todas</option>
+                  <option>Banco abcd</option>
+                  <option>Cartão de crédito abc</option>
+                </select>
+              </label>
+              <label>Centro
+                <select id="fCentro">
+                  <option value="">Todos</option>
+                  <option>Pessoal</option>
+                  <option>Empresa</option>
+                </select>
+              </label>
+              <label>Tipo
+                <select id="fTipo">
+                  <option value="">Todos</option>
+                  <option>Entradas</option>
+                  <option>Saída</option>
+                  <option>Fixas</option>
+                </select>
+              </label>
+              <label>De
+                <input type="date" id="fDataDe" />
+              </label>
+              <label>Até
+                <input type="date" id="fDataAte" />
+              </label>
+            </div>
+            <div class="row">
+              <button class="btn ghost" id="btnLimpar">Limpar filtros</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="card" style="margin-top:16px">
+        <h3>Lançamentos</h3>
+        <div class="content" style="padding-top:0">
+          <div style="max-height:460px; overflow:auto; border:1px solid var(--line); border-radius:14px">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th style="min-width:110px">Data</th>
+                  <th style="min-width:260px">Descrição</th>
+                  <th>Tipo</th>
+                  <th>Conta</th>
+                  <th>Centro</th>
+                  <th class="num">Valor (R$)</th>
+                  <th class="num">Imp. %</th>
+                  <th class="num">Mk %</th>
+                  <th class="num">Final</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="5" class="num">Entradas</th>
+                  <th colspan="2" class="num" id="tEntradas">R$ 0,00</th>
+                  <th class="num">Saídas (fixas+variáveis)</th>
+                  <th class="num" id="tSaidas">R$ 0,00</th>
+                  <th></th>
+                </tr>
+                <tr>
+                  <th colspan="8" class="num">Saldo</th>
+                  <th class="num" id="tSaldo">R$ 0,00</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ====== CÁLCULOS ====== -->
+    <section id="calculos" class="view" aria-hidden="true">
+      <div class="card">
+        <h3>Cálculos rápidos</h3>
+        <div class="content">
+          <div class="subtabs" role="tablist">
+            <button class="tab" data-sub="arq" aria-selected="true">Arquitetura</button>
+            <button class="tab" data-sub="pais">Paisagismo</button>
+            <button class="tab" data-sub="luz">Iluminação</button>
+          </div>
+
+          <!-- Arquitetura -->
+          <div id="sv-arq" class="subview" aria-hidden="false">
+            <div class="grid">
+              <div class="card"><h3>Área de piso</h3><div class="content row">
+                <label>Largura (m) <input id="arqPisoL" type="number" step="0.01" value="5"></label>
+                <label>Comprimento (m) <input id="arqPisoC" type="number" step="0.01" value="3"></label>
+                <label>Perdas (%) <input id="arqPisoPerda" type="number" step="0.5" value="7"></label>
+                <output id="arqPisoOut">Área: 15,00 m² — c/ perdas: 16,05 m²</output>
+                <button class="btn" id="arqPisoAdd">Lançar (Saída)</button>
+              </div></div>
+              <div class="card"><h3>Pintura de paredes</h3><div class="content row">
+                <label>Perímetro (m) <input id="arqPinPer" type="number" step="0.01" value="12"></label>
+                <label>Altura (m) <input id="arqPinAlt" type="number" step="0.01" value="2.8"></label>
+                <label>Áreas não pintadas (m²) <input id="arqPinVaz" type="number" step="0.01" value="2"></label>
+                <label>Rendimento (m²/L) <input id="arqPinRend" type="number" step="0.1" value="10"></label>
+                <output id="arqPinOut">Sup.: 31,60 m² — Tinta: 3,16 L</output>
+                <button class="btn" id="arqPinAdd">Lançar (Saída)</button>
+              </div></div>
+              <div class="card"><h3>Volume de concreto</h3><div class="content row">
+                <label>Comprimento (m) <input id="arqConC" type="number" step="0.01" value="4"></label>
+                <label>Largura (m) <input id="arqConL" type="number" step="0.01" value="0.3"></label>
+                <label>Altura (m) <input id="arqConA" type="number" step="0.01" value="0.2"></label>
+                <output id="arqConOut">Volume: 0,24 m³</output>
+                <button class="btn" id="arqConAdd">Lançar (Saída)</button>
+              </div></div>
+            </div>
+          </div>
+
+          <!-- Paisagismo -->
+          <div id="sv-pais" class="subview" aria-hidden="true">
+            <div class="grid">
+              <div class="card"><h3>Área do canteiro</h3><div class="content row">
+                <label>Forma
+                  <select id="areaForma">
+                    <option>Retângulo</option>
+                    <option>Círculo</option>
+                    <option>Triângulo</option>
+                  </select>
+                </label>
+                <label>A (m) <input id="areaA" type="number" step="0.01" value="5"></label>
+                <label>B (m | diâmetro) <input id="areaB" type="number" step="0.01" value="3"></label>
+                <output id="areaOut">Área: 15,00 m²</output>
+                <button class="btn" id="addArea">Lançar (Saída)</button>
+              </div></div>
+              <div class="card"><h3>Plantas por espaçamento</h3><div class="content row">
+                <label>Área (m²) <input id="plArea" type="number" step="0.01" value="20"></label>
+                <label>Espaçamento (cm) <input id="plEsp" type="number" step="1" value="40"></label>
+                <label>Arranjo <select id="plArr"><option value="quad">Quadrado</option><option value="tri">Triangular</option></select></label>
+                <label>Preço por muda (R$) <input id="plPreco" type="number" step="0.01" value="8"></label>
+                <output id="plOut">0 mudas — R$ 0,00</output>
+                <button class="btn" id="addPlantas">Lançar (Saída)</button>
+              </div></div>
+              <div class="card"><h3>Solo/Mulch</h3><div class="content row">
+                <label>Área (m²) <input id="volArea" type="number" step="0.01" value="12"></label>
+                <label>Espessura (cm) <input id="volEsp" type="number" step="0.5" value="10"></label>
+                <label>Preço m³ (R$) <input id="volPreco" type="number" step="0.01" value="150"></label>
+                <output id="volOut">0,00 m³ — R$ 0,00</output>
+                <button class="btn" id="addVolume">Lançar (Saída)</button>
+              </div></div>
+              <div class="card"><h3>Irrigação</h3><div class="content row">
+                <label>Área (m²) <input id="irArea" type="number" step="0.01" value="30"></label>
+                <label>Lâmina (mm) <input id="irLam" type="number" step="0.5" value="5"></label>
+                <label>Vazão (L/h) <input id="irVaz" type="number" step="1" value="600"></label>
+                <output id="irOut">0 L — 0 h</output>
+                <button class="btn" id="addIrr">Lançar (Saída)</button>
+              </div></div>
+            </div>
+          </div>
+
+          <!-- Iluminação -->
+          <div id="sv-luz" class="subview" aria-hidden="true">
+            <div class="grid">
+              <div class="card"><h3>Ambiente (lúmens)</h3><div class="content row">
+                <label>Área (m²) <input id="luArea" type="number" step="0.01" value="12"></label>
+                <label>Nível (lux) <input id="luLux" type="number" step="1" value="200"></label>
+                <label>Fluxo por lâmpada (lm) <input id="luLm" type="number" step="1" value="450"></label>
+                <output id="luAmbOut">Necessário: 2400 lm — ≈ 6 lâmpadas</output>
+                <button class="btn" id="luAmbAdd">Lançar (Saída)</button>
+              </div></div>
+              <div class="card"><h3>Consumo mensal</h3><div class="content row">
+                <label>Qtd. luminárias <input id="luqtd" type="number" step="1" value="6"></label>
+                <label>Potência (W) <input id="lupot" type="number" step="1" value="5"></label>
+                <label>Horas/dia <input id="luh" type="number" step="0.5" value="6"></label>
+                <label>Tarifa (R$/kWh) <input id="lutar" type="number" step="0.01" value="1.1"></label>
+                <output id="luOut">0 kWh/mês — R$ 0,00</output>
+                <button class="btn" id="addLuz">Lançar (Fixas)</button>
+              </div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SOBRE ====== -->
+    <section id="sobre" class="view" aria-hidden="true">
+      <div class="card"><h3>Sobre</h3><div class="content">
+        <p>Este painel foi desenhado para <strong>Patricia Palloni Arquitetura</strong>, com foco em usabilidade e cálculos essenciais para o dia a dia do escritório.</p>
+        <ul>
+          <li>Finanças: Entradas, Saída, Fixas; Contas: Banco abcd, Cartão de crédito abc; Centros: Pessoal/Empresa.</li>
+          <li>Cálculos: Arquitetura (piso, pintura, concreto), Paisagismo (área, plantas, solo, irrigação), Iluminação (lúmens, consumo).</li>
+          <li>Exportação em PDF pela própria impressão do navegador.</li>
+        </ul>
+      </div></div>
+    </section>
+  </main>
+
+  <script>
+    // ===== Utilidades =====
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const fmtBRL = n => (isFinite(n)? n:0).toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
+    const toNum = v => { if(typeof v==='number') return isFinite(v)? v:0; const s=String(v||'').trim().replace(/\./g,'').replace(',', '.'); const n=parseFloat(s); return isNaN(n)?0:n };
+
+    // ===== Estado (Finanças) =====
+    const STORAGE_KEY='pp_financas_v1';
+    let dados=[];
+    const TIPOS=['Entradas','Saída','Fixas'];
+    const CONTAS=['Banco abcd','Cartão de crédito abc'];
+    const CENTROS=['Pessoal','Empresa'];
+
+    function uid(){ return Math.random().toString(36).slice(2,10) }
+    function hoje(){ return new Date().toISOString().slice(0,10) }
+
+    function carregar(){
+      try{ const raw=localStorage.getItem(STORAGE_KEY); dados = raw? JSON.parse(raw): seed(); }
+      catch(e){ console.warn('Sem storage, usando memória'); dados = seed(); }
+    }
+    function salvar(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); }catch(e){} }
+
+    function seed(){
+      const d=hoje();
+      return [
+        {id:uid(), data:d, desc:'Projeto executivo jardim', tipo:'Entradas', conta:'Banco abcd', centro:'Empresa', valor: 3500, imposto: 3, markup: 10},
+        {id:uid(), data:d, desc:'Compra de mudas',           tipo:'Saída',    conta:'Cartão de crédito abc', centro:'Empresa', valor: 950, imposto: 0, markup: 0},
+        {id:uid(), data:d, desc:'Assinatura CAD',             tipo:'Fixas',    conta:'Banco abcd', centro:'Empresa', valor: 89.9, imposto: 0, markup: 0},
+        {id:uid(), data:d, desc:'Transporte pessoal',         tipo:'Saída',    conta:'Banco abcd', centro:'Pessoal', valor: 120, imposto: 0, markup: 0},
+      ]
+    }
+
+    function valorFinal(it){ return toNum(it.valor) * (1+toNum(it.imposto)/100) * (1+toNum(it.markup)/100) }
+
+    // ===== Navegação SPA =====
+    function goto(route){
+      $$('.menubtn').forEach(b=> b.setAttribute('aria-current', b.dataset.route===route? 'page':'false'));
+      $$('#home, #financas, #calculos, #sobre').forEach(v=> v.setAttribute('aria-hidden', v.id!==route?'true':'false'));
+      if(route==='home') atualizarKPIs();
+    }
+
+    // ===== Render Finanças =====
+    function render(){
+      const body=$('#tbl tbody'); if(!body) return; body.innerHTML='';
+      const L=filtrar(dados);
+      for(const it of L){
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><input type="date" value="${it.data}" data-id="${it.id}" data-k="data"></td>
+          <td><input type="text" value="${it.desc}" data-id="${it.id}" data-k="desc"></td>
+          <td><select data-id="${it.id}" data-k="tipo">${TIPOS.map(x=>`<option ${x===it.tipo?'selected':''}>${x}</option>`).join('')}</select></td>
+          <td><select data-id="${it.id}" data-k="conta">${CONTAS.map(x=>`<option ${x===it.conta?'selected':''}>${x}</option>`).join('')}</select></td>
+          <td><select data-id="${it.id}" data-k="centro">${CENTROS.map(x=>`<option ${x===it.centro?'selected':''}>${x}</option>`).join('')}</select></td>
+          <td class="num"><input type="text" inputmode="decimal" value="${toNum(it.valor).toString().replace('.',',')}" data-id="${it.id}" data-k="valor"></td>
+          <td class="num"><input type="text" inputmode="decimal" value="${toNum(it.imposto).toString().replace('.',',')}" data-id="${it.id}" data-k="imposto"></td>
+          <td class="num"><input type="text" inputmode="decimal" value="${toNum(it.markup).toString().replace('.',',')}" data-id="${it.id}" data-k="markup"></td>
+          <td class="num">${fmtBRL(valorFinal(it))}</td>
+          <td class="num"><button class="btn danger" data-del="${it.id}">Excluir</button></td>`;
+        body.appendChild(tr);
+      }
+
+      // edição
+      body.querySelectorAll('input, select').forEach(el=>{
+        el.addEventListener('input', ()=>{
+          const id=el.dataset.id, k=el.dataset.k; if(!id||!k) return; const i=dados.findIndex(x=>x.id===id); if(i<0) return;
+          let v=el.value; if(['valor','imposto','markup'].includes(k)) v=toNum(v); dados[i][k]=v; salvar(); render(); atualizarKPIs();
+        })
+      })
+
+      // deletar
+      body.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{ const id=b.dataset.del; const i=dados.findIndex(x=>x.id===id); if(i>=0){ dados.splice(i,1); salvar(); render(); atualizarKPIs(); } }))
+
+      // totais
+      let ent=0, sai=0, fix=0; for(const it of L){ const v=valorFinal(it); if(it.tipo==='Entradas') ent+=v; else if(it.tipo==='Fixas') fix+=v; else sai+=v }
+      $('#tEntradas').textContent=fmtBRL(ent); $('#tSaidas').textContent=fmtBRL(sai+fix); $('#tSaldo').textContent=fmtBRL(ent-(sai+fix));
+    }
+
+    function filtrar(list){
+      const c=$('#fConta')?.value||'', k=$('#fCentro')?.value||'', t=$('#fTipo')?.value||''; const d1=$('#fDataDe')?.value||'', d2=$('#fDataAte')?.value||'';
+      return list.filter(it=>{
+        if(c && it.conta!==c) return false; if(k && it.centro!==k) return false; if(t && it.tipo!==t) return false;
+        if(d1 && it.data<d1) return false; if(d2 && it.data>d2) return false; return true;
+      })
+    }
+
+    function atualizarKPIs(){
+      const ent = dados.filter(x=>x.tipo==='Entradas').reduce((s,x)=>s+valorFinal(x),0);
+      const sai = dados.filter(x=>x.tipo==='Saída').reduce((s,x)=>s+valorFinal(x),0);
+      const fix = dados.filter(x=>x.tipo==='Fixas').reduce((s,x)=>s+valorFinal(x),0);
+      $('#kEnt').textContent=fmtBRL(ent); $('#kSai').textContent=fmtBRL(sai); $('#kFix').textContent=fmtBRL(fix); $('#kSaldo').textContent=fmtBRL(ent-(sai+fix));
+    }
+
+    // ===== Eventos Finanças =====
+    function bindFinance(){
+      $('#btnAdd')?.addEventListener('click', ()=>{
+        const d={
+          data: $('#iData').value || hoje(),
+          desc: $('#iDesc').value || 'Novo',
+          tipo: $('#iTipo').value,
+          conta: $('#iConta').value,
+          centro: $('#iCentro').value,
+          valor: toNum($('#iValor').value),
+          imposto: toNum($('#iImp').value),
+          markup: toNum($('#iMk').value),
+        }; dados.push({id:uid(), ...d}); salvar(); render(); atualizarKPIs();
+        $('#iValor').value=''; $('#iImp').value='0'; $('#iMk').value='0';
+      })
+      ;['#fConta','#fCentro','#fTipo','#fDataDe','#fDataAte'].forEach(id=> $(id)?.addEventListener('input', render))
+      $('#btnLimpar')?.addEventListener('click', ()=>{ ['#fConta','#fCentro','#fTipo','#fDataDe','#fDataAte'].forEach(id=> $(id) && ($(id).value='')); render(); })
+      $('#btnPDF')?.addEventListener('click', ()=> window.print())
+      $('#btnZerar')?.addEventListener('click', ()=>{ if(confirm('Apagar todos os lançamentos?')){ dados=[]; salvar(); render(); atualizarKPIs(); } })
+    }
+
+    // ===== Cálculos =====
+    function calcArea(){
+      const forma = $('#areaForma').value; let A = Number($('#areaA').value)||0, B = Number($('#areaB').value)||0; let area=0;
+      if(forma==='Retângulo') area = A*B; if(forma==='Círculo') area = Math.PI * Math.pow(B/2,2); if(forma==='Triângulo') area = (A*B)/2;
+      $('#areaOut').textContent = `Área: ${area.toFixed(2)} m²`; return area;
+    }
+    function addArea(){ const area = calcArea(); addLanc({ desc:`Área canteiro ${area.toFixed(2)} m²`, tipo:'Saída', valor:0 }); }
+
+    function calcPlantas(){
+      const area = Number($('#plArea').value)||0; const esp = (Number($('#plEsp').value)||0)/100; const arr = $('#plArr').value; const preco = Number($('#plPreco').value)||0;
+      if(esp<=0){ $('#plOut').textContent='0 mudas — R$ 0,00'; return {q:0,total:0}; }
+      const fator = arr==='tri'? (Math.sqrt(3)/2) : 1; const porMuda = esp*esp*fator; const q=Math.ceil(area/porMuda); const total=q*preco;
+      $('#plOut').textContent = `${q} mudas — ${fmtBRL(total)}`; return {q,total};
+    }
+    function addPlantas(){ const {q,total}=calcPlantas(); addLanc({ desc:`${q} mudas`, tipo:'Saída', conta:'Cartão de crédito abc', valor: total }); }
+
+    function calcVolume(){ const area=Number($('#volArea').value)||0; const esp=(Number($('#volEsp').value)||0)/100; const preco=Number($('#volPreco').value)||0; const m3=area*esp; const total=m3*preco; $('#volOut').textContent=`${m3.toFixed(2)} m³ — ${fmtBRL(total)}`; return {m3,total}; }
+    function addVolume(){ const {m3,total}=calcVolume(); addLanc({ desc:`Solo/mulch ${m3.toFixed(2)} m³`, tipo:'Saída', valor: total }); }
+
+    function calcIrr(){ const A=Number($('#irArea').value)||0; const mm=Number($('#irLam').value)||0; const vaz=Number($('#irVaz').value)||0; const litros=A*mm; const h=vaz>0? litros/vaz : 0; $('#irOut').textContent=`${litros.toFixed(0)} L — ${h.toFixed(2)} h`; return {litros,h}; }
+    function addIrr(){ const {litros,h}=calcIrr(); addLanc({ desc:`Irrigação ${litros.toFixed(0)} L • ${h.toFixed(2)} h`, tipo:'Saída', valor: 0 }); }
+
+    function calcLuz(){ const n=Number($('#luqtd').value)||0; const W=Number($('#lupot').value)||0; const h=Number($('#luh').value)||0; const tarifa=Number($('#lutar').value)||0; const kWh=(n*W/1000)*h*30; const custo=kWh*tarifa; $('#luOut').textContent=`${kWh.toFixed(2)} kWh/mês — ${fmtBRL(custo)}`; return {kWh,custo}; }
+    function addLuz(){ const {kWh,custo}=calcLuz(); addLanc({ desc:`Iluminação ${kWh.toFixed(2)} kWh/mês`, tipo:'Fixas', valor: custo }); }
+
+    function calcAmbLumen(){ const A=Number($('#luArea').value)||0; const lux=Number($('#luLux').value)||0; const lm=Number($('#luLm').value)||0; const total=A*lux; const qtd=lm>0? Math.ceil(total/lm):0; $('#luAmbOut').textContent=`Necessário: ${total.toFixed(0)} lm — ≈ ${qtd} lâmpadas`; return {total,qtd}; }
+    function addAmbLumen(){ const {qtd}=calcAmbLumen(); addLanc({ desc:`Projeto iluminação (${qtd} lâmpadas)`, tipo:'Saída', valor:0 }); }
+
+    function addLanc(partial){ dados.push({ id:uid(), data:hoje(), conta:'Banco abcd', centro:'Empresa', imposto:0, markup:0, ...partial }); salvar(); render(); atualizarKPIs(); }
+
+    // ===== Bind geral =====
+    function bind(){
+      // Router
+      $$('.menubtn, [data-route]')?.forEach(b=> b.addEventListener('click', ()=> goto(b.dataset.route)));
+
+      // Subtabs cálculos
+      $$('.subtabs .tab').forEach(t=> t.addEventListener('click', ()=>{
+        $$('.subtabs .tab').forEach(x=> x.setAttribute('aria-selected','false'));
+        t.setAttribute('aria-selected','true');
+        const sub=t.dataset.sub; ['arq','pais','luz'].forEach(id=> $('#sv-'+id).setAttribute('aria-hidden', id!==sub ? 'true':'false'));
+      }))
+
+      // Finanças
+      bindFinance();
+
+      // Cálculos — listeners
+      ;['#areaForma','#areaA','#areaB'].forEach(id=> $(id)?.addEventListener('input', calcArea)); calcArea();
+      ;['#plArea','#plEsp','#plArr','#plPreco'].forEach(id=> $(id)?.addEventListener('input', calcPlantas)); calcPlantas();
+      ;['#volArea','#volEsp','#volPreco'].forEach(id=> $(id)?.addEventListener('input', calcVolume)); calcVolume();
+      ;['#irArea','#irLam','#irVaz'].forEach(id=> $(id)?.addEventListener('input', calcIrr)); calcIrr();
+      ;['#luqtd','#lupot','#luh','#lutar'].forEach(id=> $(id)?.addEventListener('input', calcLuz)); calcLuz();
+      ;['#luArea','#luLux','#luLm'].forEach(id=> $(id)?.addEventListener('input', calcAmbLumen)); calcAmbLumen();
+
+      // Botões de add
+      $('#addArea')?.addEventListener('click', addArea);
+      $('#addPlantas')?.addEventListener('click', addPlantas);
+      $('#addVolume')?.addEventListener('click', addVolume);
+      $('#addIrr')?.addEventListener('click', addIrr);
+      $('#addLuz')?.addEventListener('click', addLuz);
+      $('#luAmbAdd')?.addEventListener('click', addAmbLumen);
+    }
+
+    // ===== Init =====
+    carregar();
+    bind();
+    render();
+    atualizarKPIs();
+  </script>
+</body>
+</html>
